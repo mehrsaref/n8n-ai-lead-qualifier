@@ -1,0 +1,24 @@
+# n8n local runtime — never commit, contains encrypted credentials + execution history
+.n8n/
+database.sqlite
+*.sqlite
+
+# Secrets
+.env
+.env.*
+!.env.example
+credentials.json
+*.key
+*.pem
+
+# OS / editor
+.DS_Store
+.vscode/
+.idea/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Private strategy notes — not for the public portfolio repo
+notes/00-market-research.md
