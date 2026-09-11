@@ -69,7 +69,7 @@ working in month two.
 ## Tech stack
 
 - **n8n** — self-hosted workflow orchestration
-- **Google Gemini API** (2.5 Flash, via n8n's Google Gemini Chat Model node) — lead scoring,
+- **Google Gemini API** (3.6 Flash, via n8n's Google Gemini Chat Model node) — lead scoring,
   urgency classification, reply drafting
 - **Webhooks** — form intake from any website or form provider
 - **Google Sheets / CRM write** — swappable for HubSpot, Pipedrive, Airtable
