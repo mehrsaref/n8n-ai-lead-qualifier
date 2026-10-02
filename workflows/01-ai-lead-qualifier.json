@@ -22,12 +22,13 @@
         "promptType": "define",
         "text": "=You are qualifying inbound leads for a commercial roofing company in Manchester.\nThey take on repairs, replacements and maintenance contracts for business\npremises. They do not take on residential work.\n\nScore this lead from 1 to 10 on how worth a callback it is. Weigh commercial\nover residential, urgency, evidence of real budget, and clarity of the request.\nA vague enquiry with no detail scores low. Active damage at a commercial\nproperty scores high. Residential work scores 1 regardless of urgency.\n\nSet urgency to one of: low, medium, high.\nSet qualified to true only if score is 7 or above.\nIn reason, give one sentence a busy estimator can act on.\nIn reply, draft a short, warm reply to the customer that references their\nspecific problem. Do not invent prices, dates or availability.\nDo not promise a timescale. Acknowledge the enquiry and say the team has received it. do not repeat yourself.\n\nLead details:\nName: {{ $json.name }}\nCompany: {{ $json.company }}\nEmail: {{ $json.email }}\nPhone: {{ $json.phone }}\nJob type: {{ $json.job_type }}\nPostcode: {{ $json.postcode }}\nMessage: {{ $json.message }}",
         "hasOutputParser": true,
+        "needsFallback": true,
         "batching": {}
       },
       "type": "@n8n/n8n-nodes-langchain.chainLlm",
       "typeVersion": 1.9,
       "position": [
-        624,
+        608,
         0
       ],
       "id": "69cb2f07-6a15-4c4a-8a39-194aa1035928",
@@ -41,11 +42,13 @@
       "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
       "typeVersion": 1,
       "position": [
-        624,
-        256
+        480,
+        272
       ],
       "id": "20d96711-858e-47bb-b079-f5baf2ac3579",
       "name": "Google Gemini Chat Model",
+      "retryOnFail": true,
+      "waitBetweenTries": 2000,
       "credentials": {
         "googlePalmApi": {
           "id": "eU1prTt5LsqN005i",
@@ -60,8 +63,8 @@
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.3,
       "position": [
-        768,
-        256
+        848,
+        272
       ],
       "id": "f731aafc-69ef-46a0-b4ef-b82ee810cb4a",
       "name": "Structured Output Parser"
@@ -615,6 +618,53 @@
           "name": "Airtable Personal Access Token account"
         }
       }
+    },
+    {
+      "parameters": {
+        "fromEmail": "mehrsaref@gmail.com",
+        "toEmail": "mehrsaref@gmail.com",
+        "subject": "=Hot lead ({{ $('Basic LLM Chain').item.json.output.score }}/10) — {{ $('Normalize').item.json.company }}\n",
+        "emailFormat": "=text",
+        "text": "=Score: {{ $('Basic LLM Chain').item.json.output.score }}/10    Urgency: {{ $('Basic LLM Chain').item.json.output.urgency }}\n\nWhy: {{ $('Basic LLM Chain').item.json.output.reason }}\n\n--- Lead ---\nName:     {{ $('Normalize').item.json.name }}\nCompany:  {{ $('Normalize').item.json.company }}\nEmail:    {{ $('Normalize').item.json.email }}\nPhone:    {{ $('Normalize').item.json.phone }}\nPostcode: {{ $('Normalize').item.json.postcode }}\nJob type: {{ $('Normalize').item.json.job_type }}\n\nMessage:\n{{ $('Normalize').item.json.message }}\n\n--- Suggested reply: review before sending ---\n{{ $('Basic LLM Chain').item.json.output.reply }}\n",
+        "options": {
+          "replyTo": "={{ $('Normalize').item.json.email }}\n"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        1392,
+        -96
+      ],
+      "id": "2d7e34bc-d78a-42cc-8672-5601e86768b8",
+      "name": "Alert estimator",
+      "webhookId": "ab7cca04-a8ba-4f0a-9f73-12709b0e7df7",
+      "credentials": {
+        "smtp": {
+          "id": "H1I7ijB7EFHLk3aX",
+          "name": "SMTP account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.8-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        672,
+        288
+      ],
+      "id": "9082c7ea-30b0-4864-8dc9-3be6dab498ee",
+      "name": "Google Gemini Chat Model1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eU1prTt5LsqN005i",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -702,6 +752,28 @@
           }
         ]
       ]
+    },
+    "Log hot lead": {
+      "main": [
+        [
+          {
+            "node": "Alert estimator",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -710,7 +782,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "54163453-2c32-4c2b-bf70-7e700f43a37e",
+  "versionId": "1d3345fb-c20d-4e2c-9f3d-9c4457bfc072",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "a6f48be08d9c22014b7db9f5e11b57528ad5946d53f1103fda9c0b548ef17f25"
