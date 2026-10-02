@@ -621,8 +621,8 @@
     },
     {
       "parameters": {
-        "fromEmail": "mehrsaref@gmail.com",
-        "toEmail": "mehrsaref@gmail.com",
+        "fromEmail": "estimator@example.com",
+        "toEmail": "estimator@example.com",
         "subject": "=Hot lead ({{ $('Basic LLM Chain').item.json.output.score }}/10) — {{ $('Normalize').item.json.company }}\n",
         "emailFormat": "=text",
         "text": "=Score: {{ $('Basic LLM Chain').item.json.output.score }}/10    Urgency: {{ $('Basic LLM Chain').item.json.output.urgency }}\n\nWhy: {{ $('Basic LLM Chain').item.json.output.reason }}\n\n--- Lead ---\nName:     {{ $('Normalize').item.json.name }}\nCompany:  {{ $('Normalize').item.json.company }}\nEmail:    {{ $('Normalize').item.json.email }}\nPhone:    {{ $('Normalize').item.json.phone }}\nPostcode: {{ $('Normalize').item.json.postcode }}\nJob type: {{ $('Normalize').item.json.job_type }}\n\nMessage:\n{{ $('Normalize').item.json.message }}\n\n--- Suggested reply: review before sending ---\n{{ $('Basic LLM Chain').item.json.output.reply }}\n",
