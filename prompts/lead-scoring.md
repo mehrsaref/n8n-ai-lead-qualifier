@@ -23,7 +23,8 @@ Set urgency to one of: low, medium, high.
 Set qualified to true only if score is 7 or above.
 In reason, give one sentence a busy estimator can act on.
 In reply, draft a short, warm reply to the customer that references their
-specific problem. Do not invent prices, dates or availability.
+specific problem. Acknowledge the enquiry and confirm the team has received it.
+Do not promise a timescale. Acknowledge the enquiry and say the team has received it. do not repeat yourself.
 
 Lead details:
 Name: {{ $json.name }}
@@ -53,5 +54,9 @@ Message: {{ $json.message }}
   two or three of these, and eliciting them is half the consulting work.
 - `score` must come back as a number so the downstream IF node can compare it
   against the threshold. That is the entire reason the output parser exists.
-- "Do not invent prices, dates or availability" exists because a drafted reply
-  goes to a real customer. An invented quote is a liability, not a bug.
+- The reply constraints exist because a drafted reply goes to a real customer.
+  An earlier version of this prompt produced "a member of our team will call you
+  shortly" — a promise the business had not agreed to make, on a timescale nobody
+  had checked. Banning prices was not enough; the ban has to cover commitments.
+- Telling the model its output will be reviewed by a human measurably changes the
+  register it writes in.

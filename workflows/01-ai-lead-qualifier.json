@@ -1,0 +1,720 @@
+{
+  "name": "01 - AI Lead Qualifier",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead-intake",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        0
+      ],
+      "id": "32e1a19d-3b65-4f5d-9723-1b4d45472443",
+      "name": "Webhook",
+      "webhookId": "5aa4710c-0805-4381-8533-76b28451bddc"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are qualifying inbound leads for a commercial roofing company in Manchester.\nThey take on repairs, replacements and maintenance contracts for business\npremises. They do not take on residential work.\n\nScore this lead from 1 to 10 on how worth a callback it is. Weigh commercial\nover residential, urgency, evidence of real budget, and clarity of the request.\nA vague enquiry with no detail scores low. Active damage at a commercial\nproperty scores high. Residential work scores 1 regardless of urgency.\n\nSet urgency to one of: low, medium, high.\nSet qualified to true only if score is 7 or above.\nIn reason, give one sentence a busy estimator can act on.\nIn reply, draft a short, warm reply to the customer that references their\nspecific problem. Do not invent prices, dates or availability.\nDo not promise a timescale. Acknowledge the enquiry and say the team has received it. do not repeat yourself.\n\nLead details:\nName: {{ $json.name }}\nCompany: {{ $json.company }}\nEmail: {{ $json.email }}\nPhone: {{ $json.phone }}\nJob type: {{ $json.job_type }}\nPostcode: {{ $json.postcode }}\nMessage: {{ $json.message }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        624,
+        0
+      ],
+      "id": "69cb2f07-6a15-4c4a-8a39-194aa1035928",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.6-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        624,
+        256
+      ],
+      "id": "20d96711-858e-47bb-b079-f5baf2ac3579",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "eU1prTt5LsqN005i",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"score\": 8,\n  \"urgency\": \"high\",\n  \"qualified\": true,\n  \"reason\": \"Active water ingress causing stock damage at a commercial property, with explicit urgency and a clear timeframe.\",\n  \"reply\": \"Hi Dave, thanks for getting in touch about the warehouse roof.\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        768,
+        256
+      ],
+      "id": "f731aafc-69ef-46a0-b4ef-b82ee810cb4a",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b318e22c-a7ee-4b5e-a7d6-ee465a0e7704",
+              "name": "name",
+              "value": "=\t{{ ($json.body.name ||'').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "14bce2d1-1c43-4e00-a93c-65c2c737ebe6",
+              "name": "email",
+              "value": "={{ ($json.body.email || '').trim().toLowerCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "372e5391-586d-427f-9c22-c14c896d64c1",
+              "name": "phone",
+              "value": "={{ ($json.body.phone || '').replace(/\\s/g, '') }}",
+              "type": "string"
+            },
+            {
+              "id": "45445249-cda0-42e9-8fd4-23368d10298e",
+              "name": "company",
+              "value": "={{ ($json.body.company ||'').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "a1b0394a-ece1-49d6-8671-4db09177b3a3",
+              "name": "job_type",
+              "value": "={{ ($json.body.job_type ||'').trim() }}",
+              "type": "string"
+            },
+            {
+              "id": "92769dfa-5787-4540-b698-5db9a0536b5d",
+              "name": "postcode",
+              "value": "={{ ($json.body.postcode ||'').trim().toUpperCase() }}",
+              "type": "string"
+            },
+            {
+              "id": "78c93bb0-0676-4017-b5bc-5f671567e6ef",
+              "name": "message",
+              "value": "={{ ($json.body.message ||'').trim() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        192,
+        0
+      ],
+      "id": "98567b67-54f7-4961-b447-959c2efdf68c",
+      "name": "Normalize"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "1f6d0fb4-c271-4cc4-8978-a6dd2c1fb2f6",
+              "leftValue": "={{ $json.message.length > 0 && ($json.email.length > 0 || $json.phone.length > 0) }}",
+              "rightValue": "",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        352,
+        0
+      ],
+      "id": "5f13e662-285b-45c9-a1c6-704061caadbf",
+      "name": "Valid lead?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "d906925d-1165-45f8-b733-38436666533e",
+              "leftValue": "={{ $json.output.score }}",
+              "rightValue": "={{ 7 }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        944,
+        0
+      ],
+      "id": "9a25cdf2-45b5-4d51-93fa-230311cace6d",
+      "name": "Hot lead?"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appsY5sTu73xCMDKI",
+          "mode": "list",
+          "cachedResultName": "Lead qualifier",
+          "cachedResultUrl": "https://airtable.com/appsY5sTu73xCMDKI"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblluYCNMPfLmnd7o",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appsY5sTu73xCMDKI/tblluYCNMPfLmnd7o"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "score": "={{ $json.output.score }}",
+            "name": "={{ $('Normalize').item.json.name }}",
+            "company": "={{ $('Normalize').item.json.company }}",
+            "email": "={{ $('Normalize').item.json.email }}",
+            "phone": "={{ $('Normalize').item.json.phone }}",
+            "postcode": "={{ $('Normalize').item.json.postcode }}",
+            "job_type": "={{ $('Normalize').item.json.job_type }}",
+            "message": "={{ $('Normalize').item.json.message }}",
+            "urgency": "={{ $json.output.urgency }}",
+            "reason": "={{ $json.output.reason }}",
+            "reply": "={{ $json.output.reply }}",
+            "status": "hot"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postcode",
+              "displayName": "postcode",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "job_type",
+              "displayName": "job_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "low",
+                  "value": "low"
+                },
+                {
+                  "name": "medium",
+                  "value": "medium"
+                },
+                {
+                  "name": "high",
+                  "value": "high"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reply",
+              "displayName": "reply",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "hot",
+                  "value": "hot"
+                },
+                {
+                  "name": "cold",
+                  "value": "cold"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1184,
+        -96
+      ],
+      "id": "c3582cff-177b-4b0f-a419-2d5a24cc00cc",
+      "name": "Log hot lead",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Y54jpeJG9ES6VAdo",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appsY5sTu73xCMDKI",
+          "mode": "list",
+          "cachedResultName": "Lead qualifier",
+          "cachedResultUrl": "https://airtable.com/appsY5sTu73xCMDKI"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblluYCNMPfLmnd7o",
+          "mode": "list",
+          "cachedResultName": "Leads",
+          "cachedResultUrl": "https://airtable.com/appsY5sTu73xCMDKI/tblluYCNMPfLmnd7o"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "score": "={{ $json.output.score }}",
+            "name": "={{ $('Normalize').item.json.name }}",
+            "company": "={{ $('Normalize').item.json.company }}",
+            "email": "={{ $('Normalize').item.json.email }}",
+            "phone": "={{ $('Normalize').item.json.phone }}",
+            "postcode": "={{ $('Normalize').item.json.postcode }}",
+            "job_type": "={{ $('Normalize').item.json.job_type }}",
+            "message": "={{ $('Normalize').item.json.message }}",
+            "urgency": "={{ $json.output.urgency }}",
+            "reason": "={{ $json.output.reason }}",
+            "reply": "={{ $json.output.reply }}",
+            "status": "cold"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "company",
+              "displayName": "company",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "postcode",
+              "displayName": "postcode",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "job_type",
+              "displayName": "job_type",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "score",
+              "displayName": "score",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "low",
+                  "value": "low"
+                },
+                {
+                  "name": "medium",
+                  "value": "medium"
+                },
+                {
+                  "name": "high",
+                  "value": "high"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reply",
+              "displayName": "reply",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "options",
+              "options": [
+                {
+                  "name": "hot",
+                  "value": "hot"
+                },
+                {
+                  "name": "cold",
+                  "value": "cold"
+                }
+              ],
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        1184,
+        96
+      ],
+      "id": "8a365d12-f741-428a-9ce4-c4386e632bc2",
+      "name": "Log cold lead",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "Y54jpeJG9ES6VAdo",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize": {
+      "main": [
+        [
+          {
+            "node": "Valid lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Valid lead?": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Hot lead?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Hot lead?": {
+      "main": [
+        [
+          {
+            "node": "Log hot lead",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Log cold lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "54163453-2c32-4c2b-bf70-7e700f43a37e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "a6f48be08d9c22014b7db9f5e11b57528ad5946d53f1103fda9c0b548ef17f25"
+  },
+  "id": "VN8hGCsR1j04AgmH",
+  "tags": []
+}
